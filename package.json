@@ -1,6 +1,6 @@
 {
   "name": "modern-ms",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "🚀 Ultimate time conversion library with ESM, TypeScript, React 19, streaming, CLI, and 100x better performance",
   "exports": {

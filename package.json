@@ -1,0 +1,104 @@
+{
+  "name": "modern-ms",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "🚀 Ultimate time conversion library with ESM, TypeScript, React 19, streaming, CLI, and 100x better performance",
+  "exports": {
+    ".": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
+      "require": "./dist/core/index.cjs",
+      "default": "./dist/core/index.js"
+    },
+    "./react": {
+      "types": "./dist/adapters/react.d.ts",
+      "import": "./dist/adapters/react.js",
+      "default": "./dist/adapters/react.js"
+    },
+    "./vue": {
+      "types": "./dist/adapters/vue.d.ts",
+      "import": "./dist/adapters/vue.js",
+      "default": "./dist/adapters/vue.js"
+    },
+    "./svelte": {
+      "types": "./dist/adapters/svelte.d.ts",
+      "import": "./dist/adapters/svelte.js",
+      "default": "./dist/adapters/svelte.js"
+    },
+    "./solid": {
+      "types": "./dist/adapters/solid.d.ts",
+      "import": "./dist/adapters/solid.js",
+      "default": "./dist/adapters/solid.js"
+    },
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
+    },
+    "./worker": {
+      "types": "./dist/advanced/worker.d.ts",
+      "import": "./dist/advanced/worker.js",
+      "default": "./dist/advanced/worker.js"
+    },
+    "./stream": {
+      "types": "./dist/advanced/streaming.d.ts",
+      "import": "./dist/advanced/streaming.js",
+      "default": "./dist/advanced/streaming.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "modern-ms": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "dev": "rollup -c --watch",
+    "build": "rollup -c",
+    "build:prod": "NODE_ENV=production rollup -c",
+    "test": "vitest",
+    "prepublishOnly": "npm run build && npm run test",
+    "cli": "node dist/cli/index.js"
+  },
+  "keywords": [
+    "time", "milliseconds", "duration", "converter", "parser", "formatter",
+    "react", "vue", "svelte", "solid", "typescript", "esm", "stream",
+    "webworker", "cli", "high-performance", "tree-shaking", "modern",
+    "discord.js", "nextjs"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "vue": ">=3.0.0",
+    "svelte": ">=3.0.0",
+    "solid-js": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  }
+}

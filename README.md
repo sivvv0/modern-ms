@@ -11,7 +11,7 @@
 **The most advanced time conversion library ever built**  
 100x faster than legacy ms • Full TypeScript • React 19 • Vue 3 • Svelte 5 • Solid.js • CLI • Web Workers • Streaming
 
-[Documentation](https://modern-ms.dev) • [Examples](#-examples)
+[Documentation](https://modern-ms.dev) • 
 
 </div>
 
@@ -1117,7 +1117,7 @@ We love contributions! See our Contributing Guide.
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/modern-ms.git
+git clone https://github.com/sivvv0/modern-ms.git
 
 # Install dependencies
 pnpm install
@@ -1154,19 +1154,9 @@ MIT © 2024 discord:- s1vann
 
 🙏 Acknowledgments
 
-· Inspired by the original ms package by zeit/ms
+· Inspired by the original ms package by *zeit/ms*
 · Built with TypeScript, Rollup, and Vitest
 · Thanks to all contributors and users
-
----
-
-📞 Support
-
-· 📖 Documentation
-· 💬 Discord Server
-· 🐦 Twitter
-· 🐛 Issue Tracker
-· 📧 Email Support
 
 ---
 

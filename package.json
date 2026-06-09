@@ -1,6 +1,6 @@
 {
   "name": "modern-ms",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "🚀 Ultimate time conversion library with ESM, TypeScript, React 19, streaming, CLI, and 100x better performance",
   "main": "./dist/core/index.cjs",
@@ -36,6 +36,10 @@
     "build:prod": "NODE_ENV=production rollup -c",
     "test": "vitest run --passWithNoTests || echo 'No tests yet'",
     "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sivvv0/modern-ms.git"
   },
   "keywords": ["time", "milliseconds", "duration", "converter", "typescript", "esm", "modern"],
   "author": "Your Name",

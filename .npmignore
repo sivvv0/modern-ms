@@ -1,0 +1,11 @@
+src/
+tests/
+rollup.config.js
+tsconfig.json
+vitest.config.ts
+.gitignore
+*.log
+node_modules/
+coverage/
+.vscode/
+.idea/

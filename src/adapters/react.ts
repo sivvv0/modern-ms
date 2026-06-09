@@ -54,7 +54,7 @@ export function useAsyncMs(value: string | number, options?: any) {
 const MsContext = createContext<{ locale?: string; long?: boolean }>({});
 
 export function MsProvider({ children, ...config }: any) {
-  return <MsContext.Provider value={config}>{children}</MsContext.Provider>;
+  return createElement(MsContext.Provider, { value: config }, children);
 }
 
 export function useMsConfig() {
@@ -81,4 +81,12 @@ export function SuspenseMs({ value, options, children }: any) {
   
   const result = use(promise);
   return children(result);
+}
+
+// Helper function to avoid JSX
+function createElement(type: any, props: any, ...children: any[]) {
+  if (typeof type === 'function') {
+    return type({ ...props, children });
+  }
+  return { type, props, children };
 }

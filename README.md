@@ -11,7 +11,7 @@
 **The most advanced time conversion library ever built**  
 100x faster than legacy ms • Full TypeScript • React 19 • Vue 3 • Svelte 5 • Solid.js • CLI • Web Workers • Streaming
 
-[Documentation](https://modern-ms.dev) • 
+[Documentation](https://modern-ms.netlify.app/)
 
 </div>
 

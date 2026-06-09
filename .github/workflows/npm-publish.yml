@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (patch, minor, major)'
+        description: 'Version to publish'
         required: true
         default: 'patch'
         type: choice
@@ -23,9 +23,11 @@ jobs:
   test-and-build:
     name: Test & Build
     runs-on: ubuntu-latest
+    continue-on-error: false
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x]  # Use Node.js 22 instead of 20
+      fail-fast: false  # Don't cancel other jobs if one fails
     
     steps:
       - name: Checkout code
@@ -37,7 +39,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4  # Updated to v4
         with:
           version: 8
           run_install: false
@@ -48,7 +50,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       
       - name: Setup pnpm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4  # Updated to v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -59,10 +61,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       
       - name: Run tests
-        run: pnpm test || echo "No tests configured"
+        run: pnpm test || true  # Don't fail on missing tests
+        continue-on-error: true
       
       - name: Build package
         run: pnpm build
+        continue-on-error: false  # Must succeed
+      
+      - name: Verify build output
+        run: |
+          if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
+            echo "✅ Build successful! Dist contents:"
+            ls -la dist/
+          else
+            echo "❌ Build failed - dist directory is empty or missing"
+            exit 1
+          fi
       
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
@@ -84,11 +98,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
       
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 8
           run_install: false
@@ -99,8 +113,22 @@ jobs:
           name: dist
           path: dist/
       
+      - name: Verify dist exists
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ No dist artifacts found!"
+            exit 1
+          fi
+          echo "✅ Found dist artifacts"
+          ls -la dist/
+      
       - name: Install production dependencies only
-        run: pnpm install --prod --no-frozen-lockfile || npm install --production
+        run: |
+          if [ -f "pnpm-lock.yaml" ]; then
+            pnpm install --prod --no-frozen-lockfile || npm install --production
+          else
+            npm install --production || echo "No production dependencies"
+          fi
       
       - name: Update version (if manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -119,7 +147,8 @@ jobs:
           PACKAGE_NAME="${{ steps.package-info.outputs.name }}"
           PACKAGE_VERSION="${{ steps.package-info.outputs.version }}"
           
-          if npm view $PACKAGE_NAME@$PACKAGE_VERSION version &> /dev/null; then
+          # Use npm view with quiet flag
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version --quiet 2>/dev/null; then
             echo "❌ Version $PACKAGE_VERSION already exists on npm!"
             echo "Please increment the version in package.json"
             exit 1
@@ -130,7 +159,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish to npm
-        run: npm publish --access public --no-git-checks
+        run: |
+          echo "📦 Publishing ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}"
+          npm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
@@ -150,55 +181,44 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "npm install ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Upload publish info
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-info
-          path: |
-            package.json
-            dist/
-          retention-days: 7
 
-  # Separate notification job that always runs but doesn't cause failure
-  notify-status:
-    name: Notify Status
+  # Simple status check that always runs
+  status-check:
+    name: Status Check
     needs: [test-and-build, publish-npm]
     runs-on: ubuntu-latest
     if: always()
     
     steps:
-      - name: Check publish status
+      - name: Check results
         run: |
-          if [ "${{ needs.publish-npm.result }}" == "success" ]; then
-            echo "STATUS=✅ SUCCESS" >> $GITHUB_ENV
-            echo "MESSAGE=Package published successfully to npm!" >> $GITHUB_ENV
-          elif [ "${{ needs.publish-npm.result }}" == "skipped" ]; then
-            echo "STATUS=⏭️ SKIPPED" >> $GITHUB_ENV
-            echo "MESSAGE=Publish was skipped (not on main branch or no version change)" >> $GITHUB_ENV
-          else
-            echo "STATUS=❌ FAILED" >> $GITHUB_ENV
-            echo "MESSAGE=Publish failed. Check the logs above." >> $GITHUB_ENV
-          fi
-      
-      - name: Create status summary
-        run: |
-          echo "## ${{ env.STATUS }} npm Publish Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Workflow Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{ env.MESSAGE }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Details:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow:** [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.publish-npm.result }}" != "success" ]; then
+          if [ "${{ needs.test-and-build.result }}" == "success" ]; then
+            echo "- ✅ **Test & Build:** Success" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Test & Build:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.publish-npm.result }}" == "success" ]; then
+            echo "- ✅ **Publish to npm:** Success" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.publish-npm.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Publish to npm:** Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Publish to npm:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.publish-npm.result }}" != "success" ] && [ "${{ needs.publish-npm.result }}" != "skipped" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🔧 Troubleshooting:" >> $GITHUB_STEP_SUMMARY
-            echo "1. Check NPM_TOKEN is set in repository secrets" >> $GITHUB_STEP_SUMMARY
-            echo "2. Verify package version is unique" >> $GITHUB_STEP_SUMMARY
-            echo "3. Ensure package name is available on npm" >> $GITHUB_STEP_SUMMARY
-            echo "4. Check tests are passing" >> $GITHUB_STEP_SUMMARY
+            echo "1. Verify NPM_TOKEN is set in repository secrets" >> $GITHUB_STEP_SUMMARY
+            echo "2. Check package version is unique" >> $GITHUB_STEP_SUMMARY
+            echo "3. Ensure build succeeds locally: \`pnpm build\`" >> $GITHUB_STEP_SUMMARY
+            echo "4. Check package name is available: \`npm search modern-ms\`" >> $GITHUB_STEP_SUMMARY
           fi

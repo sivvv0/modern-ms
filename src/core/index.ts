@@ -10,5 +10,6 @@ function ms(value: string | number, options?: FormatOptions | ParseOptions): str
 ms.parse = parse;
 ms.format = format;
 
-export default ms;
-export { parse, format, type FormatOptions, type ParseOptions, type TimeUnit };
+// Use named exports only to avoid warning
+export { ms as default, parse, format };
+export type { FormatOptions, ParseOptions, TimeUnit };

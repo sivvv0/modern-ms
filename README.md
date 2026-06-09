@@ -2,9 +2,7 @@
 
 <div align="center">
 
-![npm version](https://img.shields.io/npm/v/modern-ms)
-![npm downloads](https://img.shields.io/npm/dm/modern-ms)
-![brotli size](https://img.shields.io/bundlephobia/minzip/modern-ms)
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green)

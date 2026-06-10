@@ -171,6 +171,122 @@ createReadStream('times.txt').pipe(transform).pipe(process.stdout);
 
 Discord.js Bot
 
+```js
+const { Client, GatewayIntentBits } = require('discord.js');
+const ms = require('modern-ms');
+
+const client = new Client({ 
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ] 
+});
+
+// Ready event
+client.once('ready', () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`📦 modern-ms v0.1.0 ready`);
+});
+
+// Simple prefix command (!remind)
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (!message.content.startsWith('!')) return;
+
+  const args = message.content.slice(1).split(' ');
+  const command = args[0].toLowerCase();
+  
+  // !remind 2h "Take a break"
+  if (command === 'remind') {
+    const timeStr = args[1];
+    const reminderMsg = args.slice(2).join(' ') || 'Time is up!';
+    
+    try {
+      const duration = ms.parse(timeStr);
+      
+      if (duration > ms.parse('30 days')) {
+        return message.reply('❌ Reminder cannot be longer than 30 days!');
+      }
+      
+      const formattedTime = ms.format(duration, { long: true });
+      
+      await message.reply(`✅ Reminder set for ${formattedTime}`);
+      
+      setTimeout(async () => {
+        await message.reply(`🔔 **Reminder:** ${reminderMsg}`);
+        await message.author.send(`⏰ Reminder: ${reminderMsg}`);
+      }, duration);
+      
+    } catch (error) {
+      await message.reply(`❌ Invalid time format. Examples: \`2h\`, \`30m\`, \`1d\`, \`2 hours\``);
+    }
+  }
+  
+  // !timeout @user 10m Spamming
+  if (command === 'timeout') {
+    const member = message.mentions.members.first();
+    const timeStr = args[2];
+    const reason = args.slice(3).join(' ') || 'No reason provided';
+    
+    if (!member) return message.reply('❌ Please mention a user to timeout');
+    if (!timeStr) return message.reply('❌ Please specify a duration (e.g., `10m`, `1h`)');
+    
+    try {
+      const duration = ms.parse(timeStr);
+      
+      if (duration < ms.parse('1s')) {
+        return message.reply('❌ Timeout must be at least 1 second');
+      }
+      
+      if (duration > ms.parse('28 days')) {
+        return message.reply('❌ Timeout cannot exceed 28 days');
+      }
+      
+      const formattedTime = ms.format(duration, { long: true });
+      
+      await member.timeout(duration, reason);
+      await message.reply(`✅ Timed out ${member.user.tag} for ${formattedTime}\nReason: ${reason}`);
+      
+    } catch (error) {
+      await message.reply(`❌ Error: ${error.message}`);
+    }
+  }
+  
+  // !slowmode 5s
+  if (command === 'slowmode') {
+    const timeStr = args[1];
+    
+    if (!timeStr) return message.reply('❌ Please specify slowmode duration (e.g., `5s`, `2m`)');
+    
+    try {
+      const duration = ms.parse(timeStr);
+      
+      if (duration > ms.parse('6h')) {
+        return message.reply('❌ Slowmode cannot exceed 6 hours');
+      }
+      
+      const seconds = Math.floor(duration / 1000);
+      await message.channel.setRateLimitPerUser(seconds);
+      
+      const formattedTime = ms.format(duration, { long: true });
+      await message.reply(`✅ Slowmode set to ${formattedTime}`);
+      
+    } catch (error) {
+      await message.reply(`❌ Invalid duration: ${timeStr}`);
+    }
+  }
+  
+  // !uptime
+  if (command === 'uptime') {
+    const uptime = ms.format(client.uptime, { long: true, maxUnits: 3 });
+    await message.reply(`🤖 Bot uptime: ${uptime}`);
+  }
+});
+
+client.login('YOUR_BOT_TOKEN');
+```
+
 ```typescript
 import { Client, GatewayIntentBits, SlashCommandBuilder } from 'discord.js';
 import ms from 'modern-ms';
